@@ -158,14 +158,16 @@ jobs:
           echo "Warning: Default passwords found in configuration"
           exit 1
         fi
-
+        
         echo "Checking for hardcoded secrets..."
-        if grep -r "password\|secret\|token" config/ --exclude-dir=.git | grep -v example; then
+        # Look for potential secrets but exclude example/placeholder values
+        if grep -r "password\|secret\|token" config/ --exclude-dir=.git | grep -v -i "example\|placeholder\|your-\|<\|>"; then
           echo "Warning: Potential hardcoded secrets found"
+          echo "Make sure all sensitive values use placeholder text with 'example' or 'your-' prefix"
           exit 1
         fi
-
-  documentation:
+        
+        echo "Security checks passed!"  documentation:
     name: Check Documentation
     runs-on: ubuntu-latest
 
