@@ -33,7 +33,7 @@ scrape_configs:
   #     - targets: ['your-app-service:8080']
   #   metrics_path: '/metrics'
   #   scrape_interval: 15s
-  
+
   # Example: Database metrics (uncomment and add appropriate exporter)
   # - job_name: 'database-exporter'
   #   static_configs:

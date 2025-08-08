@@ -50,6 +50,18 @@ When adding new observability components:
 - Provide example configurations for common use cases
 - Ensure backward compatibility when possible
 - Document any breaking changes
+- **Security**: Use placeholder values with "example" or "your-" prefix for sensitive data
+
+> **Tip**: Run `./scripts/security-check.sh` to validate your configuration locally before submitting.
+
+### Security Guidelines
+
+When contributing configuration files:
+
+- **Never commit real credentials** - Use placeholder values only
+- **Use clear placeholder format**: `your-password-example`, `your-token-example`
+- **Comment security-sensitive sections** to guide users
+- **Test security checks locally**: Run the CI security validation before submitting
 
 ### Documentation
 
@@ -76,6 +88,8 @@ Before submitting a pull request:
 - [ ] No breaking changes to existing functionality
 - [ ] Documentation is updated
 - [ ] Management script works correctly
+- [ ] External links in documentation are valid (localhost URLs are automatically ignored in CI)
+- [ ] Security checks pass (no hardcoded credentials or default passwords)
 
 ## 📝 Pull Request Process
 
@@ -128,7 +142,7 @@ When reporting issues:
 **Environment:**
 - OS: [e.g., Ubuntu 20.04]
 - Docker version: [e.g., 20.10.8]
-- Docker Compose version: [e.g., 2.0.1]
+- Docker Compose version: [e.g., 2.0.1] (specify if using `docker-compose` or `docker compose`)
 
 **Description:**
 A clear and concise description of the issue.

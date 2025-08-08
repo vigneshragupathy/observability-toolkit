@@ -5,7 +5,7 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  
+
   # Prometheus receiver for scraping metrics
   prometheus:
     config:
@@ -20,12 +20,12 @@ processors:
   batch:
     timeout: 1s
     send_batch_size: 1024
-    
+
   # Memory limiter to prevent OOM
   memory_limiter:
     limit_mib: 256
     check_interval: 1s
-    
+
   # Resource processor to add metadata
   resource:
     attributes:
@@ -35,7 +35,7 @@ processors:
       - key: collector.version
         value: "1.0.0"
         action: insert
-  
+
   # Attributes processor for data enrichment
   attributes:
     actions:
@@ -51,19 +51,19 @@ exporters:
     endpoint: jaeger:4317
     tls:
       insecure: true
-  
+
   # Prometheus exporter for metrics
   prometheus:
     endpoint: "0.0.0.0:8889"
     const_labels:
       collector: "otel"
-  
+
   # Elasticsearch exporter for logs
   elasticsearch:
     endpoints: ["http://elasticsearch:9200"]
     logs_index: "otel-logs"
     traces_index: "otel-traces"
-  
+
   # Logging exporter for debugging
   logging:
     loglevel: debug
@@ -83,12 +83,12 @@ service:
       receivers: [otlp]
       processors: [memory_limiter, resource, attributes, batch]
       exporters: [otlp/jaeger, elasticsearch, logging]
-    
+
     metrics:
       receivers: [otlp, prometheus]
       processors: [memory_limiter, resource, batch]
       exporters: [prometheus, logging]
-    
+
     logs:
       receivers: [otlp]
       processors: [memory_limiter, resource, attributes, batch]

@@ -2,8 +2,8 @@ global:
   # Configure SMTP settings (customize for your environment)
   smtp_smarthost: 'smtp.example.com:587'
   smtp_from: 'alertmanager@yourcompany.com'
-  smtp_auth_username: 'your-username'
-  smtp_auth_password: 'your-password'
+  smtp_auth_username: 'your-username-example'
+  smtp_auth_password: 'your-password-example'
 
 route:
   group_by: ['alertname', 'service']

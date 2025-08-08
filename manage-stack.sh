@@ -41,7 +41,11 @@ check_docker() {
 
 # Function to check if Docker Compose is available
 check_docker_compose() {
-    if ! command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
+    if command -v docker-compose >/dev/null 2>&1; then
+        DOCKER_COMPOSE_CMD="docker-compose"
+    elif docker compose version >/dev/null 2>&1; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    else
         print_error "Docker Compose is not available. Please install Docker Compose."
         exit 1
     fi
@@ -58,7 +62,7 @@ start_stack() {
     mkdir -p "$SCRIPT_DIR/config"
     
     print_status "Starting all services..."
-    docker-compose -f "$COMPOSE_FILE" up -d
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d
     
     print_status "Waiting for services to be ready..."
     sleep 10
@@ -83,7 +87,7 @@ start_stack() {
 # Function to stop the observability stack
 stop_stack() {
     print_header "Stopping Observability Stack..."
-    docker-compose -f "$COMPOSE_FILE" down
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down
     print_status "All services stopped."
 }
 
@@ -100,17 +104,17 @@ show_logs() {
     local service="$1"
     if [ -z "$service" ]; then
         print_status "Showing logs for all services..."
-        docker-compose -f "$COMPOSE_FILE" logs -f
+        $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs -f
     else
         print_status "Showing logs for $service..."
-        docker-compose -f "$COMPOSE_FILE" logs -f "$service"
+        $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" logs -f "$service"
     fi
 }
 
 # Function to show status
 show_status() {
     print_header "Observability Stack Status:"
-    docker-compose -f "$COMPOSE_FILE" ps
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps
     
     echo ""
     print_header "Service Health Checks:"
@@ -141,7 +145,7 @@ cleanup() {
     read -r response
     if [[ "$response" =~ ^[Yy]$ ]]; then
         print_header "Cleaning up Observability Stack..."
-        docker-compose -f "$COMPOSE_FILE" down -v --remove-orphans
+        $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down -v --remove-orphans
         docker system prune -f
         print_status "Cleanup completed."
     else
@@ -173,21 +177,27 @@ show_help() {
 # Main script logic
 case "${1:-}" in
     start)
+        check_docker_compose
         start_stack
         ;;
     stop)
+        check_docker_compose
         stop_stack
         ;;
     restart)
+        check_docker_compose
         restart_stack
         ;;
     status)
+        check_docker_compose
         show_status
         ;;
     logs)
+        check_docker_compose
         show_logs "$2"
         ;;
     cleanup)
+        check_docker_compose
         cleanup
         ;;
     help|--help|-h)

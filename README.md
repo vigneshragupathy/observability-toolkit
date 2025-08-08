@@ -38,9 +38,11 @@ A comprehensive, production-ready observability stack that provides metrics coll
 
 ### Prerequisites
 - Docker Engine 20.10+
-- Docker Compose 2.0+
+- Docker Compose 2.0+ (either `docker-compose` or `docker compose`)
 - At least 4GB of available RAM
 - 10GB of free disk space
+
+> **Note**: This toolkit supports both the standalone `docker-compose` binary and the newer `docker compose` plugin. The management script will automatically detect which version is available.
 
 ### Starting the Stack
 
@@ -63,7 +65,11 @@ A comprehensive, production-ready observability stack that provides metrics coll
 
 4. **Using Docker Compose directly:**
    ```bash
+   # Using docker-compose (standalone)
    docker-compose up -d
+   
+   # OR using docker compose (plugin)
+   docker compose up -d
    ```
 
 ### Accessing the Services
@@ -75,6 +81,8 @@ After starting the stack, you can access the following services:
 - **Jaeger Tracing**: http://localhost:16686
 - **Kibana Logs**: http://localhost:5601
 - **AlertManager**: http://localhost:9093
+
+> **Note**: These URLs are only accessible when the stack is running locally.
 
 ## 📁 Configuration Structure
 
@@ -199,7 +207,11 @@ PROMETHEUS_METRICS_PATH=/metrics
 
 3. **Restart Prometheus**:
    ```bash
-   docker-compose restart prometheus
+   # Using the management script
+   ./manage-stack.sh restart
+   
+   # OR using Docker Compose directly
+   docker-compose restart prometheus  # or: docker compose restart prometheus
    ```
 
 ### Custom Dashboards
@@ -207,7 +219,11 @@ PROMETHEUS_METRICS_PATH=/metrics
 1. Create dashboard JSON files in `config/grafana/dashboards/`
 2. Restart Grafana or wait for auto-reload:
    ```bash
-   docker-compose restart grafana
+   # Using the management script
+   ./manage-stack.sh restart
+   
+   # OR restart just Grafana
+   docker-compose restart grafana  # or: docker compose restart grafana
    ```
 
 ## 📈 Performance Tuning
