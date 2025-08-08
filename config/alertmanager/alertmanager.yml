@@ -1,0 +1,71 @@
+global:
+  # Configure SMTP settings (customize for your environment)
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@yourcompany.com'
+  smtp_auth_username: 'your-username'
+  smtp_auth_password: 'your-password'
+
+route:
+  group_by: ['alertname', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-receiver'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+    - match:
+        type: performance
+      receiver: 'performance-alerts'
+    - match:
+        type: error_rate
+      receiver: 'error-alerts'
+
+receivers:
+  - name: 'default-receiver'
+    # Configure your default notification method
+    webhook_configs:
+      - url: 'https://your-webhook-endpoint.com/alerts'
+        send_resolved: true
+
+  - name: 'critical-alerts'
+    # Critical alerts - multiple notification channels recommended
+    webhook_configs:
+      - url: 'https://your-webhook-endpoint.com/critical'
+        send_resolved: true
+    # Example email configuration (uncomment and configure)
+    # email_configs:
+    #   - to: 'ops-team@yourcompany.com'
+    #     subject: 'CRITICAL ALERT: {{ .GroupLabels.alertname }}'
+    #     body: |
+    #       {{ range .Alerts }}
+    #       Alert: {{ .Annotations.summary }}
+    #       Description: {{ .Annotations.description }}
+    #       Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+    #       {{ end }}
+
+  - name: 'performance-alerts'
+    webhook_configs:
+      - url: 'https://your-webhook-endpoint.com/performance'
+        send_resolved: true
+
+  - name: 'error-alerts'
+    webhook_configs:
+      - url: 'https://your-webhook-endpoint.com/errors'
+        send_resolved: true
+
+# Example Slack configuration (uncomment and configure)
+# - name: 'slack-notifications'
+#   slack_configs:
+#     - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+#       channel: '#alerts'
+#       title: 'Alert: {{ .GroupLabels.alertname }}'
+#       text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']

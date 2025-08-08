@@ -1,0 +1,61 @@
+# Docker and Docker Compose
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+
+# Data volumes and logs
+data/
+logs/
+*.log
+
+# Grafana data
+grafana-data/
+
+# Elasticsearch data
+elasticsearch-data/
+
+# Prometheus data
+prometheus-data/
+
+# AlertManager data
+alertmanager-data/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS generated files
+.directory
+.fuse_hidden*
+
+# Local configuration overrides
+config/local/
+config/*.local.*
