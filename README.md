@@ -82,6 +82,8 @@ After starting the stack, you can access the following services:
 - **Kibana Logs**: http://localhost:5601
 - **AlertManager**: http://localhost:9093
 
+> **Note**: These URLs are only accessible when the stack is running locally.
+
 ## 📁 Configuration Structure
 
 ```

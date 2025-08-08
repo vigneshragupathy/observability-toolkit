@@ -76,6 +76,7 @@ Before submitting a pull request:
 - [ ] No breaking changes to existing functionality
 - [ ] Documentation is updated
 - [ ] Management script works correctly
+- [ ] External links in documentation are valid (localhost URLs are automatically ignored in CI)
 
 ## 📝 Pull Request Process
 
