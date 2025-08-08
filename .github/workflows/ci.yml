@@ -167,7 +167,9 @@ jobs:
           exit 1
         fi
         
-        echo "Security checks passed!"  documentation:
+        echo "Security checks passed!"
+
+  documentation:
     name: Check Documentation
     runs-on: ubuntu-latest
 
