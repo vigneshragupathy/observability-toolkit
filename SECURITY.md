@@ -132,7 +132,7 @@ All services are configured to bind to all interfaces (0.0.0.0) for ease of use.
 
 ## Resources
 
-- [OWASP Container Security Top 10](https://github.com/OWASP/Container-Security-Top-10)
+- [OWASP Container Security Top 10](https://github.com/OWASP/Docker-Security)
 - [Docker Security Best Practices](https://docs.docker.com/engine/security/)
 - [Kubernetes Security](https://kubernetes.io/docs/concepts/security/)
 - [Prometheus Security](https://prometheus.io/docs/operating/security/)
