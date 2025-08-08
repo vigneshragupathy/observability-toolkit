@@ -128,7 +128,7 @@ When reporting issues:
 **Environment:**
 - OS: [e.g., Ubuntu 20.04]
 - Docker version: [e.g., 20.10.8]
-- Docker Compose version: [e.g., 2.0.1]
+- Docker Compose version: [e.g., 2.0.1] (specify if using `docker-compose` or `docker compose`)
 
 **Description:**
 A clear and concise description of the issue.
