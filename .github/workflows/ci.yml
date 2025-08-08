@@ -158,7 +158,7 @@ jobs:
           echo "Warning: Default passwords found in configuration"
           exit 1
         fi
-        
+
         echo "Checking for hardcoded secrets..."
         # Look for potential secrets but exclude example/placeholder values
         if grep -r "password\|secret\|token" config/ --exclude-dir=.git | grep -v -i "example\|placeholder\|your-\|<\|>"; then
@@ -166,7 +166,7 @@ jobs:
           echo "Make sure all sensitive values use placeholder text with 'example' or 'your-' prefix"
           exit 1
         fi
-        
+
         echo "Security checks passed!"
 
   documentation:
