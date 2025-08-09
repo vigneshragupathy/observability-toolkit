@@ -45,7 +45,7 @@ check_docker() {
 check_docker_compose() {
     # If DOCKER_COMPOSE_CMD is already set (e.g., by CI), validate and use it
     if [[ -n "$DOCKER_COMPOSE_CMD" ]]; then
-        if command -v ${DOCKER_COMPOSE_CMD%% *} >/dev/null 2>&1; then
+        if command -v "${DOCKER_COMPOSE_CMD%% *}" >/dev/null 2>&1; then
             print_status "Using pre-configured Docker Compose command: $DOCKER_COMPOSE_CMD"
             return 0
         else
