@@ -1,11 +1,14 @@
 {
-  "dashboard": {
-    "id": null,
-    "title": "Observability Stack Overview",
-    "tags": ["observability", "overview"],
-    "style": "dark",
-    "timezone": "browser",
-    "panels": [
+  "id": null,
+  "uid": "obs-overview",
+  "title": "Observability Stack Overview",
+  "tags": ["observability", "overview"],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": false,
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
       {
         "id": 1,
         "title": "System CPU Usage",
@@ -100,10 +103,6 @@
         "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
       }
     ],
-    "time": {
-      "from": "now-1h",
-      "to": "now"
-    },
-    "refresh": "5s"
-  }
+  "time": {"from": "now-1h", "to": "now"},
+  "refresh": "5s"
 }
