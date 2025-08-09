@@ -131,12 +131,17 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     needs: validate
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Run Trivy vulnerability scanner
+      # NOTE: Using a floating master tag is discouraged; pin to a version for reproducibility.
+      # Consider updating to the latest released tag periodically (e.g., v0.x.y).
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: 'fs'
@@ -145,8 +150,11 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
-      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      # Avoid failing on PRs from forks where the token lacks security-events: write
+      if: >-
+        always() && (github.event_name != 'pull_request' ||
+        (github.event.pull_request.head.repo.full_name == github.repository))
       with:
         sarif_file: 'trivy-results.sarif'
 
