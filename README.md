@@ -31,6 +31,9 @@ A comprehensive demo and learning observability stack that provides metrics coll
 | **OpenTelemetry Collector** | Data pipeline and processing | 4317/4318 | - |
 | **AlertManager** | Alert management and routing | 9093 | http://localhost:9093 |
 | **Node Exporter** | System metrics collection | 9100 | - |
+| **Kafka** | Log pipeline buffering | 29092 | - |
+| **Kafka UI** | Inspect Kafka topics | 8085 | http://localhost:8085 |
+| **Kafka JMX Exporter** | Kafka metrics for Prometheus | 5556 | http://localhost:5556/metrics |
 
 ## ⚠️ Security Notice
 
@@ -65,7 +68,7 @@ A comprehensive demo and learning observability stack that provides metrics coll
    ./manage-stack.sh start
    ```
 
-4. **Using Docker Compose directly:**
+4. **Using Docker Compose directly (Alternative to step 3 – choose one):**
    ```bash
    # Using docker-compose (standalone)
    docker-compose up -d
@@ -92,19 +95,87 @@ A sample FastAPI + OpenTelemetry app lives under `o11y-playground/o11y-python`.
 It runs in its own directory and just needs to share the Docker network named `observability`
 so it can reach the toolkit's OpenTelemetry Collector at `otel-collector:4317`.
 
+docker compose up -d --build
 Run it separately (after starting the stack):
 ```bash
 cd o11y-playground/o11y-python
-docker compose up -d --build
+chmod +x run.sh # first time only
+./run.sh up     # build & start
+./run.sh traffic # optional sample load
 ```
 Stop it:
 ```bash
-docker compose down
+./run.sh down
 ```
 
 Endpoints: `/`, `/work`, `/error` (http://localhost:8000)
 
 These generate traces (Jaeger), metrics (Prometheus/Grafana), and logs (Kibana) independently of the core compose file.
+
+### Kafka-Based Log Pipeline (Default)
+
+Kafka is enabled by default to demonstrate a decoupled log ingestion flow:
+
+1. Applications send logs to the OpenTelemetry Collector (OTLP) as usual.
+2. Collector (pipeline `logs_produce`) publishes log records to Kafka topic `otel-logs` in OTLP JSON encoding.
+3. A second Collector pipeline (`logs_consume`) consumes from Kafka and forwards to Elasticsearch.
+4. Kibana visualizes logs stored in Elasticsearch with no change required by applications.
+
+Benefits demonstrated:
+- Decouples ingestion from indexing (burst smoothing, backpressure handling concept).
+- Provides a tap point to add stream processors / enrichment later.
+- Shows how the Collector can both produce to and consume from Kafka.
+
+Start the stack (Kafka already included):
+```bash
+./manage-stack.sh start
+```
+
+Opt-out (no Kafka buffering, logs go straight to Elasticsearch):
+```bash
+./manage-stack.sh start --no-kafka
+```
+
+Inspect the topic:
+```bash
+open http://localhost:8085  # Kafka UI
+```
+
+Produce a sample log burst (using the demo app traffic command):
+```bash
+cd o11y-playground/o11y-python
+./run.sh traffic
+```
+
+If you disable Kafka, the Collector config still defines Kafka pipelines; without the broker they will error. For a cleaner no-Kafka run, use `--no-kafka` which suppresses starting broker/UI (logs may show Kafka exporter connection retries until you adjust the Collector config). Future improvement: conditional Collector config templating.
+
+Topic & encoding details:
+- Topic: `otel-logs`
+- Encoding: `otlp_json` (human-inspectable payloads)
+- Consumer group: `otel-collector-log-consumer`
+
+If Kafka is down, the `logs_produce` pipeline retries (see exporter retry settings) and you may see backpressure in the Collector logs.
+
+### Predefined Grafana Dashboards
+
+Grafana auto-loads dashboard JSON files from `config/grafana/dashboards/` via provisioning (see `config/grafana/provisioning/dashboards/dashboards.yml`). Included demo dashboards:
+
+| Dashboard Title | UID | File | Highlights |
+|-----------------|-----|------|------------|
+| Observability Stack Overview | `obs-overview` | `observability-overview.json` | System CPU %, Memory %, Service availability table, HTTP request rate example |
+| Node Exporter Overview | `node-exporter-overview` | `node-exporter-overview.json` | CPU (avg & per-core), Memory, Load, Filesystem %, Disk IO, Network throughput, Uptime |
+| Kafka Overview | `kafka-overview` | `kafka-overview.json` | Topic message/byte rates, partition count, consumer lag, under-replicated partitions, log flow from Kafka to Elasticsearch |
+
+If a dashboard doesn’t appear:
+1. Ensure the file exists under `config/grafana/dashboards/`.
+2. Restart Grafana: `docker compose restart grafana` (or `./manage-stack.sh restart`).
+3. Check logs: `docker compose logs grafana | grep -i provisioning`.
+
+To add your own:
+1. Create/export a dashboard JSON in the Grafana UI.
+2. Save it into `config/grafana/dashboards/` (plain dashboard JSON, not wrapped).
+3. Set a unique `uid` to avoid clashes.
+4. Restart (or wait for the `updateIntervalSeconds` to reload).
 
 ## 📁 Configuration Structure
 
@@ -164,7 +235,8 @@ The `manage-stack.sh` script provides convenient management commands:
 
 ### Log Aggregation
 - **OpenTelemetry Collector** receives logs via OTLP
-- Logs are forwarded to **Elasticsearch**
+- If Kafka profile enabled: logs are first published to **Kafka** (topic `otel-logs`) then consumed and sent to **Elasticsearch**
+- If Kafka not enabled: (baseline) logs go directly to **Elasticsearch**
 - **Kibana** provides log visualization and search
 
 ### Distributed Tracing

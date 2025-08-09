@@ -1,0 +1,90 @@
+hostPort: kafka:9999
+ssl: false
+lowercaseOutputName: false
+lowercaseOutputLabelNames: false
+
+rules:
+  # Kafka broker metrics
+  - pattern: kafka.server<type=(.+), name=(.+)PerSec, topic=(.+)><>Count
+    name: kafka_server_$1_$2_total
+    labels:
+      topic: "$3"
+    help: "Kafka server $1 $2 total count"
+    type: COUNTER
+
+  - pattern: kafka.server<type=(.+), name=(.+)PerSec><>Count
+    name: kafka_server_$1_$2_total
+    help: "Kafka server $1 $2 total count"
+    type: COUNTER
+
+  - pattern: kafka.server<type=(.+), name=(.+), topic=(.+)><>Value
+    name: kafka_server_$1_$2
+    labels:
+      topic: "$3"
+    help: "Kafka server $1 $2"
+
+  - pattern: kafka.server<type=(.+), name=(.+)><>Value
+    name: kafka_server_$1_$2
+    help: "Kafka server $1 $2"
+
+  # Consumer group lag
+  - pattern: kafka.consumer<type=consumer-fetch-manager-metrics, client-id=(.+)><>records-lag-max
+    name: kafka_consumer_lag_max
+    labels:
+      client_id: "$1"
+    help: "Kafka consumer lag max"
+
+  # Log size metrics
+  - pattern: kafka.log<type=Log, name=Size, topic=(.+), partition=(.+)><>Value
+    name: kafka_log_size_bytes
+    labels:
+      topic: "$1"
+      partition: "$2"
+    help: "The size of the log in bytes"
+
+  # Request metrics
+  - pattern: kafka.network<type=RequestMetrics, name=(.+), request=(.+)><>Count
+    name: kafka_network_request_$1_total
+    labels:
+      request: "$2"
+    help: "Kafka network request $1 total"
+    type: COUNTER
+
+  # Producer/Consumer metrics
+  - pattern: kafka.server<type=BrokerTopicMetrics, name=(.+), topic=(.+)><>Count
+    name: kafka_server_brokertopicmetrics_$1_total
+    labels:
+      topic: "$2"
+    help: "Kafka broker topic metrics $1 total"
+    type: COUNTER
+
+  - pattern: kafka.server<type=BrokerTopicMetrics, name=(.+)><>Count
+    name: kafka_server_brokertopicmetrics_$1_total
+    help: "Kafka broker topic metrics $1 total"
+    type: COUNTER
+
+  # Replica manager metrics
+  - pattern: kafka.server<type=ReplicaManager, name=(.+)><>Value
+    name: kafka_server_replicamanager_$1
+    help: "Kafka replica manager $1"
+
+  # Controller metrics
+  - pattern: kafka.controller<type=KafkaController, name=(.+)><>Value
+    name: kafka_controller_$1
+    help: "Kafka controller $1"
+
+  # General JVM metrics
+  - pattern: java.lang<type=Memory><HeapMemoryUsage>used
+    name: kafka_jvm_memory_heap_used_bytes
+    help: "JVM heap memory used"
+
+  - pattern: java.lang<type=Memory><NonHeapMemoryUsage>used
+    name: kafka_jvm_memory_nonheap_used_bytes
+    help: "JVM non-heap memory used"
+
+  - pattern: java.lang<type=GarbageCollector, name=(.+)><CollectionCount>
+    name: kafka_jvm_gc_collection_total
+    labels:
+      gc: "$1"
+    help: "JVM garbage collection count"
+    type: COUNTER

@@ -32,6 +32,13 @@ scrape_configs:
     static_configs:
       - targets: ['otel-collector:8889']
 
+  # Kafka JMX metrics (via JMX exporter)
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka-jmx-exporter:5556']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+
   # Example: Application services (uncomment and customize for your services)
   # - job_name: 'your-app-service'
   #   static_configs:

@@ -15,6 +15,14 @@ receivers:
           static_configs:
             - targets: ['0.0.0.0:8888']
 
+  # Kafka receiver (consumes produced log records for storage in Elasticsearch)
+  kafka:
+    brokers: [kafka:9092]
+    topic: otel-logs
+    group_id: otel-collector-log-consumer
+    client_id: otel-collector
+  # Use default OTLP protobuf encoding (receiver side); otlp_json not supported for receiver in this version
+
 processors:
   # Batch processor for efficiency
   batch:
@@ -64,6 +72,17 @@ exporters:
     logs_index: "otel-logs"
     traces_index: "otel-traces"
 
+  # Kafka exporter for logs (acts as a buffer/decoupling layer before ES)
+  kafka/logs:
+    brokers: [kafka:9092]
+    topic: otel-logs
+    # Use protobuf encoding for compatibility with receiver (otlp_json exporter encoding is experimental and not yet supported by receiver here)
+    encoding: otlp_proto
+    retry_on_failure:
+      enabled: true
+    metadata:
+      full: true
+
   # Logging exporter for debugging
   logging:
     loglevel: debug
@@ -89,9 +108,16 @@ service:
       processors: [memory_limiter, resource, batch]
       exporters: [prometheus, logging]
 
-    logs:
+    # Stage 1: Receive logs from applications and produce to Kafka (no direct ES write)
+    logs/produce:
       receivers: [otlp]
       processors: [memory_limiter, resource, attributes, batch]
+      exporters: [kafka/logs, logging]
+
+    # Stage 2: Consume logs from Kafka and store in Elasticsearch
+    logs/consume:
+      receivers: [kafka]
+      processors: [batch]
       exporters: [elasticsearch, logging]
 
   telemetry:
