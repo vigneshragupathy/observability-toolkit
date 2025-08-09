@@ -4,7 +4,9 @@
 [![Docker](https://img.shields.io/badge/Docker-20.10%2B-blue)](https://www.docker.com/)
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2.0%2B-blue)](https://docs.docker.com/compose/)
 
-A comprehensive, production-ready observability stack that provides metrics collection, log aggregation, distributed tracing, and alerting capabilities using industry-standard open-source tools.
+A comprehensive demo and learning observability stack that provides metrics collection, log aggregation, distributed tracing, and alerting capabilities using industry-standard open-source tools.
+
+> **Disclaimer**: This project is intended for demonstration, experimentation, and educational purposes only. It is **NOT production ready**. It runs all components in single containers with minimal configuration and without hardening (no auth, no TLS, single-node Elasticsearch, in-container Prometheus storage, no HA, no backup/restore strategy). Before any production use you must implement security, scaling, persistence, resilience, and operational safeguards.
 
 ## ✨ Features
 
@@ -83,6 +85,26 @@ After starting the stack, you can access the following services:
 - **AlertManager**: http://localhost:9093
 
 > **Note**: These URLs are only accessible when the stack is running locally.
+
+### Demo Application (Independent)
+
+A sample FastAPI + OpenTelemetry app lives under `o11y-playground/o11y-python`.
+It runs in its own directory and just needs to share the Docker network named `observability`
+so it can reach the toolkit's OpenTelemetry Collector at `otel-collector:4317`.
+
+Run it separately (after starting the stack):
+```bash
+cd o11y-playground/o11y-python
+docker compose up -d --build
+```
+Stop it:
+```bash
+docker compose down
+```
+
+Endpoints: `/`, `/work`, `/error` (http://localhost:8000)
+
+These generate traces (Jaeger), metrics (Prometheus/Grafana), and logs (Kibana) independently of the core compose file.
 
 ## 📁 Configuration Structure
 

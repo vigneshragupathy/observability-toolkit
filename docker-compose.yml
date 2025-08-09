@@ -143,6 +143,7 @@ services:
     networks:
       - observability
 
+
 volumes:
   prometheus_data:
   elasticsearch_data:
@@ -151,4 +152,5 @@ volumes:
 
 networks:
   observability:
+    name: observability
     driver: bridge

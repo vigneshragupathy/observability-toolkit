@@ -1,0 +1,106 @@
+{
+  "id": null,
+  "uid": "node-exporter-overview",
+  "title": "Node Exporter Overview",
+  "tags": ["node", "infrastructure", "overview"],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": false,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+      {
+        "id": 1,
+        "title": "CPU Usage % (avg per instance)",
+        "type": "stat",
+        "targets": [
+          {"expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "refId": "A"}
+        ],
+        "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 60}, {"color": "red", "value": 85}]}}},
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Memory Usage %",
+        "type": "stat",
+        "targets": [
+          {"expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "refId": "A"}
+        ],
+        "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]}}},
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Load Average (1m)",
+        "type": "stat",
+        "targets": [
+          {"expr": "avg(node_load1)", "refId": "A"}
+        ],
+        "fieldConfig": {"defaults": {"unit": "none"}},
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "CPU Usage per Instance",
+        "type": "graph",
+        "targets": [
+          {"expr": "100 - (irate(node_cpu_seconds_total{mode=\"idle\"}[5m]) * 100)", "legendFormat": "{{instance}} core={{cpu}}", "refId": "A"}
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
+      },
+      {
+        "id": 5,
+        "title": "Memory Used (bytes)",
+        "type": "graph",
+        "targets": [
+          {"expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)", "legendFormat": "{{instance}}", "refId": "A"}
+        ],
+        "fieldConfig": {"defaults": {"unit": "bytes"}},
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6}
+      },
+      {
+        "id": 6,
+        "title": "Filesystem Usage %",
+        "type": "graph",
+        "targets": [
+          {"expr": "(node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"} - node_filesystem_free_bytes{fstype!~\"tmpfs|overlay\"}) / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"} * 100", "legendFormat": "{{instance}} {{mountpoint}}", "refId": "A"}
+        ],
+        "fieldConfig": {"defaults": {"unit": "percent"}},
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14}
+      },
+      {
+        "id": 7,
+        "title": "Disk IO Read/Write (bytes/s)",
+        "type": "graph",
+        "targets": [
+          {"expr": "sum by(instance) (irate(node_disk_read_bytes_total[5m]))", "legendFormat": "{{instance}} read", "refId": "A"},
+          {"expr": "sum by(instance) (irate(node_disk_written_bytes_total[5m]))", "legendFormat": "{{instance}} write", "refId": "B"}
+        ],
+        "fieldConfig": {"defaults": {"unit": "Bps"}},
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14}
+      },
+      {
+        "id": 8,
+        "title": "Network RX/TX (bytes/s)",
+        "type": "graph",
+        "targets": [
+          {"expr": "sum by(instance) (irate(node_network_receive_bytes_total{device!~\"lo\"}[5m]))", "legendFormat": "{{instance}} rx", "refId": "A"},
+          {"expr": "sum by(instance) (irate(node_network_transmit_bytes_total{device!~\"lo\"}[5m]))", "legendFormat": "{{instance}} tx", "refId": "B"}
+        ],
+        "fieldConfig": {"defaults": {"unit": "Bps"}},
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22}
+      },
+      {
+        "id": 9,
+        "title": "Uptime (seconds)",
+        "type": "table",
+        "targets": [
+          {"expr": "node_time_seconds - node_boot_time_seconds", "format": "table", "refId": "A"}
+        ],
+        "fieldConfig": {"defaults": {"unit": "s"}},
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22}
+      }
+  ]
+}
