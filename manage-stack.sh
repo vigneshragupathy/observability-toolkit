@@ -6,6 +6,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
+# Enable Kafka profile by default; can be disabled with --no-kafka
+EXTRA_PROFILES="kafka"
 
 # Colors for output
 RED='\033[0;31m'
@@ -61,8 +63,13 @@ start_stack() {
     # Create necessary directories if they don't exist
     mkdir -p "$SCRIPT_DIR/config"
     
-    print_status "Starting all services..."
-    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up -d
+    local compose_cmd=("$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE")
+    if [[ -n "$EXTRA_PROFILES" ]]; then
+        print_status "Enabling profiles: $EXTRA_PROFILES"
+        compose_cmd+=(--profile "$EXTRA_PROFILES")
+    fi
+    print_status "Starting services..."
+    "${compose_cmd[@]}" up -d
     
     print_status "Waiting for services to be ready..."
     sleep 10
@@ -137,6 +144,30 @@ show_status() {
             echo -e "❌ $service_name: ${RED}Unhealthy${NC}"
         fi
     done
+
+    # Optional components (Kafka & UI) only if containers exist
+    if $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps -q kafka >/dev/null 2>&1; then
+        # Kafka health: simple TCP connectivity check to advertised host port 29092
+        if bash -c '>/dev/tcp/127.0.0.1/29092' 2>/dev/null; then
+            echo -e "✅ Kafka: ${GREEN}Reachable (port 29092)${NC}"
+        else
+            echo -e "❌ Kafka: ${RED}Port not reachable${NC}"
+        fi
+    fi
+    if $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps -q kafka-ui >/dev/null 2>&1; then
+        if curl -s http://localhost:8085/ >/dev/null 2>&1; then
+            echo -e "✅ Kafka UI: ${GREEN}Healthy${NC}"
+        else
+            echo -e "❌ Kafka UI: ${RED}Unhealthy${NC}"
+        fi
+    fi
+    if $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps -q kafka-jmx-exporter >/dev/null 2>&1; then
+        if curl -s http://localhost:5556/metrics >/dev/null 2>&1; then
+            echo -e "✅ Kafka JMX Exporter: ${GREEN}Healthy${NC}"
+        else
+            echo -e "❌ Kafka JMX Exporter: ${RED}Unhealthy${NC}"
+        fi
+    fi
 }
 
 # Function to clean up (remove containers and volumes)
@@ -160,7 +191,7 @@ show_help() {
     echo "Usage: $0 [COMMAND] [OPTIONS]"
     echo ""
     echo "Commands:"
-    echo "  start     Start the observability stack"
+    echo "  start     Start the observability stack (Kafka enabled by default; use --no-kafka to disable)"
     echo "  stop      Stop the observability stack"
     echo "  restart   Restart the observability stack"
     echo "  status    Show status of all services"
@@ -175,7 +206,22 @@ show_help() {
 }
 
 # Main script logic
-case "${1:-}" in
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --with-kafka)
+            # Backwards compatibility: already default; no-op
+            shift ;;
+        --no-kafka)
+            EXTRA_PROFILES=""
+            shift ;;
+        start|stop|restart|status|logs|cleanup|help|--help|-h)
+            MAIN_CMD="$1"; shift; break ;;
+        *)
+            MAIN_CMD="$1"; shift; break ;;
+    esac
+done
+
+case "${MAIN_CMD:-${1:-}}" in
     start)
         check_docker_compose
         start_stack

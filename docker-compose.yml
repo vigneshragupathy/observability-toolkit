@@ -90,6 +90,7 @@ services:
       - jaeger
       - prometheus
       - elasticsearch
+      - kafka
     networks:
       - observability
 
@@ -140,6 +141,61 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - observability
+
+  # Optional: Apache Kafka (KRaft mode) + UI for experimenting with data pipeline integration
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: kafka
+    profiles: ["kafka"]
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,PLAINTEXTHOST://:29092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXTHOST:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXTHOST://localhost:29092
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      # JMX configuration for metrics
+      - KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.rmi.port=9999 -Djava.rmi.server.hostname=kafka
+      - JMX_PORT=9999
+    ports:
+      - "29092:29092" # Host access
+      - "9999:9999"   # JMX port
+    networks:
+      - observability
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-ui
+    profiles: ["kafka"]
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    depends_on:
+      - kafka
+    ports:
+      - "8085:8080" # UI
+    networks:
+      - observability
+
+  # JMX Exporter for Kafka metrics
+  kafka-jmx-exporter:
+    image: bitnami/jmx-exporter:latest
+    container_name: kafka-jmx-exporter
+    profiles: ["kafka"]
+    environment:
+      - JMX_EXPORTER_CONFIG_FILE=/opt/bitnami/jmx-exporter/example_configs/kafka-2_0_0.yml
+      - JMX_EXPORTER_JMX_URL=service:jmx:rmi:///jndi/rmi://kafka:9999/jmxrmi
+    ports:
+      - "5556:5556"  # Use default JMX exporter port
+    depends_on:
+      - kafka
     networks:
       - observability
 
