@@ -75,7 +75,9 @@ start_stack() {
     # Create necessary directories if they don't exist
     mkdir -p "$SCRIPT_DIR/config"
     
-    local compose_cmd=("$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE")
+    # Build docker compose command array; intentional word splitting if command has spaces (e.g., 'docker compose')
+    # shellcheck disable=SC2206 # we want splitting here
+    local compose_cmd=( $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" )
     if [[ -n "$EXTRA_PROFILES" ]]; then
         print_status "Enabling profiles: $EXTRA_PROFILES"
         compose_cmd+=(--profile "$EXTRA_PROFILES")
