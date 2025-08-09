@@ -43,6 +43,17 @@ check_docker() {
 
 # Function to check if Docker Compose is available
 check_docker_compose() {
+    # If DOCKER_COMPOSE_CMD is already set (e.g., by CI), validate and use it
+    if [[ -n "$DOCKER_COMPOSE_CMD" ]]; then
+        if command -v ${DOCKER_COMPOSE_CMD%% *} >/dev/null 2>&1; then
+            print_status "Using pre-configured Docker Compose command: $DOCKER_COMPOSE_CMD"
+            return 0
+        else
+            print_warning "Pre-configured DOCKER_COMPOSE_CMD '$DOCKER_COMPOSE_CMD' not found, auto-detecting..."
+        fi
+    fi
+    
+    # Auto-detect available Docker Compose command
     if command -v docker-compose >/dev/null 2>&1; then
         DOCKER_COMPOSE_CMD="docker-compose"
     elif docker compose version >/dev/null 2>&1; then
@@ -51,6 +62,7 @@ check_docker_compose() {
         print_error "Docker Compose is not available. Please install Docker Compose."
         exit 1
     fi
+    print_status "Using Docker Compose command: $DOCKER_COMPOSE_CMD"
 }
 
 # Function to start the observability stack
