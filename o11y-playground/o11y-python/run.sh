@@ -80,7 +80,10 @@ sample_traffic() {
     echo "---- GET $ep"; curl -s -w "\n" "http://localhost:8000$ep" || true
   done
   log "Burst /work requests"
-  for i in $(seq 1 10); do curl -s "http://localhost:8000/work" >/dev/null || true; done
+  # Use a C-style loop to avoid unused variable warning (SC2034)
+  for ((n=1; n<=10; n++)); do
+    curl -s "http://localhost:8000/work" >/dev/null || true
+  done
   log "Done"
 }
 
