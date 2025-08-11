@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: o11y-python
+  namespace: o11y-python
+  labels:
+    app: o11y-python
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: o11y-python
+  template:
+    metadata:
+      labels:
+        app: o11y-python
+    spec:
+      containers:
+        - name: o11y-python
+          # Using local image loaded into kind node (avoids pulling via cluster-internal service name which containerd on node cannot resolve)
+          image: o11y-python:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.observability.svc.cluster.local:4317
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_SERVICE_NAME
+              value: o11y-python
+          ports:
+            - containerPort: 8000
+              name: http

@@ -18,6 +18,7 @@ A comprehensive demo and learning observability stack that provides metrics coll
 - **🔄 Data Pipeline**: OpenTelemetry Collector for data processing
 - **🖥️ System Monitoring**: Node Exporter for host metrics
 - **🛠️ Easy Management**: Convenient shell script for operations
+- **☸️ Kubernetes Ready**: Kustomize manifests for deploying the full stack + sample app (Kind or any cluster)
 
 ## 📋 Stack Components
 
@@ -111,6 +112,32 @@ Stop it:
 Endpoints: `/`, `/work`, `/error` (http://localhost:8000)
 
 These generate traces (Jaeger), metrics (Prometheus/Grafana), and logs (Kibana) independently of the core compose file.
+
+### Kubernetes Deployment (Alternative Environment)
+
+You can also deploy the same observability toolkit to a Kubernetes cluster (tested with Kind) with namespace separation and auto‑provisioned Grafana dashboards.
+
+Quick Kind demo:
+```bash
+cd kubernetes/kind
+./setup.sh  # creates kind cluster + applies kustomize
+```
+
+Generic cluster:
+```bash
+cd kubernetes
+./deploy.sh --wait
+```
+
+Then port-forward (example):
+```bash
+kubectl -n observability port-forward svc/grafana 3000:3000 &
+kubectl -n observability port-forward svc/prometheus 9090:9090 &
+kubectl -n observability port-forward svc/jaeger-query 16686:16686 &
+kubectl -n observability port-forward svc/kibana 5601:5601 &
+```
+
+Kubernetes docs, build modes (external vs in‑cluster Kaniko), and dashboard provisioning details live in `kubernetes/README.md`.
 
 ### Kafka-Based Log Pipeline (Default)
 
@@ -436,9 +463,11 @@ This project is actively maintained. We aim to:
 - Add new observability tools as they become stable
 - Improve documentation and examples
 - Enhance security and production readiness
+- Evolve Kubernetes deployment (Ingress, persistence, security hardening, optional operator-based stack)
 
 When adding new components or configurations:
 1. Update this README
 2. Test with the management script
 3. Ensure proper service discovery configuration
 4. Add appropriate alerting rules
+ 5. If applicable, mirror changes in `kubernetes/` manifests & docs

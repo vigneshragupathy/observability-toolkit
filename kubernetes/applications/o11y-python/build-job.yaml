@@ -1,0 +1,102 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: build-o11y-python-
+  namespace: o11y-python
+  labels:
+    job: build-o11y-python
+  annotations:
+    o11y-python/build-timestamp: "{{BUILD_TIMESTAMP}}" # replace via sed to force new image builds
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:v1.23.2-debug
+          args:
+            - '--dockerfile=/workspace/Dockerfile'
+            - '--context=/workspace'
+            - '--destination=registry.observability.svc.cluster.local:5000/o11y-python:latest'
+            - '--insecure'
+            - '--skip-tls-verify'
+          volumeMounts:
+            - name: src
+              mountPath: /workspace
+      volumes:
+        - name: src
+          configMap:
+            name: o11y-python-source
+            items:
+              - key: Dockerfile
+                path: Dockerfile
+              - key: app.py
+                path: app.py
+              - key: run.sh
+                path: run.sh
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: o11y-python-source
+  namespace: o11y-python
+  labels:
+    app: o11y-python
+    component: source
+data:
+  Dockerfile: |
+    FROM python:3.11-slim
+    WORKDIR /app
+    COPY app.py run.sh ./
+    RUN pip install --no-cache-dir \
+        fastapi==0.110.0 \
+        uvicorn[standard]==0.29.0 \
+        opentelemetry-sdk==1.21.0 \
+        opentelemetry-exporter-otlp==1.21.0 \
+        opentelemetry-instrumentation-fastapi==0.42b0 \
+        opentelemetry-instrumentation-logging==0.42b0
+    EXPOSE 8000
+    CMD ["python", "app.py"]
+  app.py: |
+    from fastapi import FastAPI
+    import os
+    import time
+    import logging
+    from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+    logging.basicConfig(level=logging.INFO)
+
+    OTEL_ENDPOINT = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector.observability.svc.cluster.local:4317")
+
+    resource = Resource(attributes={
+        "service.name": os.getenv("OTEL_SERVICE_NAME", "o11y-python"),
+        "service.version": "0.1.0"
+    })
+
+    provider = TracerProvider(resource=resource)
+    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=OTEL_ENDPOINT, insecure=True))
+    provider.add_span_processor(processor)
+    trace.set_tracer_provider(provider)
+
+    tracer = trace.get_tracer(__name__)
+    app = FastAPI()
+
+    @app.get("/")
+    async def root():
+        with tracer.start_as_current_span("root-span"):
+            logging.info("Handling root request")
+            time.sleep(0.05)
+            return {"message": "Hello from o11y-python in Kubernetes!"}
+
+    if __name__ == "__main__":
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+  run.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    exec python app.py

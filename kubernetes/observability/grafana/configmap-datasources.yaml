@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: observability
+  labels:
+    app: grafana
+    component: datasources
+    part-of: observability-stack
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus.observability.svc.cluster.local:9090
+        isDefault: true
+        editable: true
+      - name: Jaeger
+        type: jaeger
+        access: proxy
+        url: http://jaeger-query.observability.svc.cluster.local:16686
+        editable: true
+      - name: Elasticsearch
+        type: elasticsearch
+        access: proxy
+        url: http://elasticsearch.observability.svc.cluster.local:9200
+        database: "otel-logs*"
+        editable: true
+        jsonData:
+          interval: Daily
+          timeField: "@timestamp"
+          esVersion: "8.0.0"
