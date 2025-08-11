@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: observability
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:8.11.0
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: http://elasticsearch.observability.svc.cluster.local:9200
+            - name: xpack.security.enabled
+              value: "false"
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=1024"
+          ports:
+            - containerPort: 5601
+              name: http
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1
+              memory: 1Gi

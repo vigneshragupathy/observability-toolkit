@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: o11y-python
+  labels:
+    name: o11y-python
+    app-example: "true"
+---
+# (Optional) Additional namespace-scoped resources (network policies, resource quotas) can be added here later.

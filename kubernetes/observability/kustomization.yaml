@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: observability
+resources:
+  - namespace.yaml
+  - prometheus/configmap.yaml
+  - prometheus/deployment.yaml
+  - prometheus/service.yaml
+  - grafana/configmap-datasources.yaml
+  - grafana/configmap-dashboards.yaml
+  - grafana/configmap-dashboards-provider.yaml
+  - grafana/deployment.yaml
+  - grafana/service.yaml
+  - otel-collector/configmap.yaml
+  - otel-collector/deployment.yaml
+  - otel-collector/service.yaml
+  - alertmanager/configmap.yaml
+  - alertmanager/deployment.yaml
+  - alertmanager/service.yaml
+  - elasticsearch/statefulset.yaml
+  - elasticsearch/service.yaml
+  - kibana/deployment.yaml
+  - kibana/service.yaml
+  - jaeger/deployment.yaml
+  - jaeger/service.yaml
+  - node-exporter/daemonset.yaml
+  - kafka/statefulset.yaml
+  - kafka/service.yaml
+  - kafka-jmx-exporter/deployment.yaml
+  - kafka-jmx-exporter/service.yaml
+  - registry/deployment.yaml
