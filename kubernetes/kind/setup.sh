@@ -1,5 +1,60 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Show help function
+show_help() {
+  cat << EOF
+Usage: $0 [OPTIONS]
+
+Set up a Kind Kubernetes cluster with observability stack.
+
+OPTIONS:
+  -h, --help          Show this help message and exit
+  --cluster-name NAME Set cluster name (default: observability)
+  --config FILE       Path to Kind cluster config (default: ./cluster.yaml)
+
+ENVIRONMENT VARIABLES:
+  CLUSTER_NAME        Cluster name to use (default: observability)
+  KIND_CONFIG         Path to Kind cluster config file
+
+EXAMPLES:
+  $0                           # Create cluster with defaults
+  $0 --cluster-name my-cluster # Create cluster with custom name
+  $0 --config /path/to/config  # Use custom config file
+
+SERVICES EXPOSED:
+  Grafana:      http://localhost:3000
+  Prometheus:   http://localhost:9090
+  Jaeger UI:    http://localhost:16686
+  Kibana:       http://localhost:5601
+  Alertmanager: http://localhost:9093
+
+EOF
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+    --cluster-name)
+      CLUSTER_NAME="$2"
+      shift 2
+      ;;
+    --config)
+      KIND_CONFIG="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Use --help for usage information." >&2
+      exit 1
+      ;;
+  esac
+done
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLUSTER_NAME=${CLUSTER_NAME:-observability}
 KIND_CONFIG=${KIND_CONFIG:-${SCRIPT_DIR}/cluster.yaml}
