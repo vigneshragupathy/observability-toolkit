@@ -108,7 +108,15 @@ start_stack() {
 # Function to stop the observability stack
 stop_stack() {
     print_header "Stopping Observability Stack..."
-    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" down
+    
+    # Build docker compose command array with profiles to ensure all services are stopped
+    local compose_cmd=( $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" )
+    if [[ -n "$EXTRA_PROFILES" ]]; then
+        print_status "Stopping services with profiles: $EXTRA_PROFILES"
+        compose_cmd+=(--profile "$EXTRA_PROFILES")
+    fi
+    "${compose_cmd[@]}" down
+    
     print_status "All services stopped."
 }
 
@@ -175,13 +183,7 @@ show_status() {
             echo -e "❌ Kafka UI: ${RED}Unhealthy${NC}"
         fi
     fi
-    if $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" ps -q kafka-jmx-exporter >/dev/null 2>&1; then
-        if curl -s http://localhost:5556/metrics >/dev/null 2>&1; then
-            echo -e "✅ Kafka JMX Exporter: ${GREEN}Healthy${NC}"
-        else
-            echo -e "❌ Kafka JMX Exporter: ${RED}Unhealthy${NC}"
-        fi
-    fi
+
 }
 
 # Function to clean up (remove containers and volumes)

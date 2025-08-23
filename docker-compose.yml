@@ -16,6 +16,7 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
       - '--web.enable-lifecycle'
       - '--web.enable-admin-api'
+    restart: unless-stopped
     networks:
       - observability
 
@@ -38,6 +39,7 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+    restart: unless-stopped
     networks:
       - observability
 
@@ -52,6 +54,7 @@ services:
       - xpack.security.enabled=false
     depends_on:
       - elasticsearch
+    restart: unless-stopped
     networks:
       - observability
 
@@ -68,6 +71,7 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
       - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    restart: unless-stopped
     networks:
       - observability
 
@@ -88,6 +92,7 @@ services:
       - jaeger
       - prometheus
       - elasticsearch
+    restart: unless-stopped
     networks:
       - observability
 
@@ -106,6 +111,7 @@ services:
       - ./config/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
+    restart: unless-stopped
     networks:
       - observability
 
@@ -121,6 +127,7 @@ services:
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
+    restart: unless-stopped
     networks:
       - observability
 
@@ -138,6 +145,7 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
     networks:
       - observability
 
@@ -158,12 +166,9 @@ services:
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-      # JMX configuration for metrics
-      - KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.rmi.port=9999 -Djava.rmi.server.hostname=kafka
-      - JMX_PORT=9999
     ports:
       - "29092:29092" # Host access
-      - "9999:9999"   # JMX port
+    restart: unless-stopped
     networks:
       - observability
 
@@ -178,23 +183,11 @@ services:
       - kafka
     ports:
       - "8085:8080" # UI
+    restart: unless-stopped
     networks:
       - observability
 
-  # JMX Exporter for Kafka metrics
-  kafka-jmx-exporter:
-    image: bitnami/jmx-exporter:latest
-    container_name: kafka-jmx-exporter
-    profiles: ["kafka"]
-    environment:
-      - JMX_EXPORTER_CONFIG_FILE=/opt/bitnami/jmx-exporter/example_configs/kafka-2_0_0.yml
-      - JMX_EXPORTER_JMX_URL=service:jmx:rmi:///jndi/rmi://kafka:9999/jmxrmi
-    ports:
-      - "5556:5556"  # Use default JMX exporter port
-    depends_on:
-      - kafka
-    networks:
-      - observability
+
 
 
 volumes:
